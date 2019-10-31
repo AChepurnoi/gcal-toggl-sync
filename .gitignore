@@ -2,3 +2,4 @@ __pycache__
 .env
 credentials.json
 tocken.pickle
+toggl_token.txt
