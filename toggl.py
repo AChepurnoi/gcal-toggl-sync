@@ -4,7 +4,8 @@ from base64 import b64encode
 import logging
 from typing import Tuple, List, Type
 import requests
-
+import os
+from config import LOCAL_STORAGE_PATH
 
 class TogglAPI:
     def __init__(self, token: str, base_url='https://toggl.com'):
@@ -42,9 +43,25 @@ class TogglAPI:
         res = self._post('/api/v8/time_entries', json=params)
         return res.json()
 
+
+class LocalFSTokenStore():
+    def __init__(self, store_name="toggl_token", token_init=None):
+        if token_init:
+            self.token = token_init
+            with open(f'{LOCAL_STORAGE_PATH}/{store_name}.txt', 'w') as token_store:
+                token_store.write(self.token)
+        elif os.path.exists(f'{LOCAL_STORAGE_PATH}/{store_name}.txt'):
+            with open(f'{LOCAL_STORAGE_PATH}/{store_name}.txt', 'r') as token_store:
+                self.token = token_store.read()
+        else: 
+            logging.error(f"Token not found. Please provide token and it will be saved for sequential use (Storage path: {LOCAL_STORAGE_PATH})")
+            raise FileNotFoundError("Token not found")
+
+
 class TogglService:
-    def __init__(self, token: str):
+    def __init__(self, token: str, workspace_id):
         self._api = TogglAPI(token=token)
+        self._wid = workspace_id
 
     def _duplicate_event_filter(self, existing_entries):
         def filter(event: Event):
@@ -71,7 +88,7 @@ class TogglService:
             logging.info(f"Adding time entry for \"{event.summary}\"")
             self._api.create_entry({
                 'time_entry': {
-                    'wid': '1059890',
+                    'wid': self._wid,
                     'description': event.summary,
                     'start': event.start.isoformat(),
                     'duration': event.duration,

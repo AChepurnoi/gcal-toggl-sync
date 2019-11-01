@@ -3,3 +3,6 @@ __pycache__
 credentials.json
 token.pickle
 toggl_token.txt
+build
+dist
+.vscode

@@ -8,6 +8,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from base64 import b64encode
 import logging
+from config import LOCAL_STORAGE_PATH, CREDENTIALS_PATH, GOOGLE_SCOPES, resource_path
+
 
 class Event:
     def __init__(self, summary: str, start: datetime.datetime, end: datetime.datetime):
@@ -19,30 +21,27 @@ class Event:
     def __str__(self):
         return f"{self.summary} event [{self.start} - {self.end}] ({self.duration}s)"
 
-
-
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 class CliCalendarService:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
         creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if os.path.exists('token.pickle'):
-            with open('token.pickle', 'rb') as token:
+        if os.path.exists(f'{LOCAL_STORAGE_PATH}/google-auth-token.pickle'):
+            with open(f'{LOCAL_STORAGE_PATH}/google-auth-token.pickle', 'rb') as token:
                 creds = pickle.load(token)
+
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', SCOPES)
+                flow = InstalledAppFlow.from_client_secrets_file(resource_path(CREDENTIALS_PATH), GOOGLE_SCOPES)
                 creds = flow.run_local_server(port=0)
+                
             # Save the credentials for the next run
-            with open('token.pickle', 'wb') as token:
+            with open(f'{LOCAL_STORAGE_PATH}/google-auth-token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
 
         self._service = build('calendar', 'v3', credentials=creds)
@@ -56,8 +55,8 @@ class CliCalendarService:
                                               singleEvents=True,
                                               orderBy='startTime').execute()
         events = events_result.get('items', [])
-
         result = []
+        
         for event in events:
             summary = event['summary']
             if event['status'] != 'confirmed':
