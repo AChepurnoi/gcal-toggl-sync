@@ -6,7 +6,7 @@ This cli app synchronizing events from google calendar to the toggl. OAuth2 Loca
 **NOTICE**: You will have a google authorization warning with default binary because app is not verified. You can ignore that or rebuild it with your credentials. 
 
 
-**[Download the executable binary for mac]()**
+**[Download the executable binary for mac](https://github.com/AChepurnoi/gcal-toggl-sync/releases/tag/v0.9)**
 ## How to use
 
 ```
